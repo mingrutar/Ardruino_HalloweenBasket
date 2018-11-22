@@ -8,29 +8,29 @@
 
 #include "neopixel_play.h"
 
-const uint16 LED_COUNT 16;
-static Adafruit_NeoPixel face_leds = Adafruit_NeoPixel(LED_COUNT, PIN_NEO_Face, NEO_GRB + NEO_KHZ800);
+static const int face_led_count = 40;
+static Adafruit_NeoPixel face_leds = Adafruit_NeoPixel(face_led_count, PIN_NEO_Face, NEO_GRB + NEO_KHZ800);
 
 class FacialLights : public NeoLEDPlay {
 private:
-  const uint32 DELAY_TIME = 1000;     // in msec
-  const uint32 LONG_OFF = 60000;      // in msec,
+  static const uint32_t DELAY_TIME = 1000;     // in msec
+  static const uint32_t LONG_OFF = 60000;      // in msec,
   bool color_on;
-  uint32 on_time, off_time;
+  uint32_t on_time, off_time;
 
 public:
   FacialLights() : NeoLEDPlay(face_leds) {;};
-  virtual int process(int state);
-  virtual int updateTime(int state, uint32 msec);
+  virtual int8_t process(int8_t state);
+  virtual int8_t updateTime(int8_t state, uint32_t msec);
  };
 ///////////////
-int FacialLights::process(int state) {
+int8_t FacialLights::process(int8_t state) {
   enabled = true;
   if (state != DETECT_NONE) {
     enabled = true;
     select_play(-1);                    // any rythm
     on_time = DELAY_TIME;
-    off_time = (state == DETECT_HAND) ? DELAY_TIME : LONG_OFF
+    off_time = (state == DETECT_HAND) ? DELAY_TIME : LONG_OFF;
     countdown = on_time;
     color_on = true;
   } else {
@@ -38,7 +38,7 @@ int FacialLights::process(int state) {
   }
   return state;
 }
-void FacialLights::updateTime(int state, uint32 msec) {
+int8_t FacialLights::updateTime(int8_t state, uint32_t msec) {
   if (enabled) {
     countdown -= msec;
     if (countdown <= 0) {

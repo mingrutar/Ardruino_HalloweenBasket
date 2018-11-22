@@ -10,27 +10,26 @@
 
 // const int SR04_DELAY = 60;
 // static SR04 sr04 = SR04(PIN_SR04_ECHO, PIN_SR04_TRIG);  // ultrasound, L10
+static const int TURN_DEGREE = 2;
+static const int TURN_START = 0;
+static const int TURN_END = 180;
+
 struct servo_turning {
-  uint8_t start_pos;
-  uint8_t offset;       # TURN_DEGREE, or -TURN_DEGREE
+  int start_pos;
+  int offset;       // TURN_DEGREE, or -TURN_DEGREE
 };
+static struct servo_turning cfg[] = {
+    {.start_pos=TURN_START, .offset=TURN_DEGREE},
+    {.start_pos=TURN_END, .offset=-TURN_DEGREE}
+};
+static SR04 mysr04 = SR04(PIN_SR04_ECHO, PIN_SR04_TRIG);
+static Servo myservo;                       // SG90 L9, create servo object to
+
 class BodyDetector : public HalloweenBase {
 private:
   const int SR04_MAX_DISTANCE = 100;   // in cm, up to 400cm
   const int SERVO_N_TURN = 3;          // search 3 times;
   const int SERVO_DELAY = 20;          // was 15 for 1 degree
-  const int TURN_DEGREE = 2;
-  const int TURN_START = 0;
-  const int TURN_END = 180;
-  const int SERVO_N_TURN = 3;
-
-  Servo myservo;                       // SG90 L9, create servo object to
-  SR04 mysr04(PIN_SR04_ECHO, PIN_SR04_TRIG);
-
-  struct servo_turning cfg[] = {
-    {.start_pos=TURN_START, .offset=TURN_DEGREE},
-    {.start_pos=TURN_END, .offset=-TURN_DEGREE},
-  };
 
   uint8_t cur_pos;
   uint8_t cur_cfg_idx;
@@ -39,13 +38,12 @@ private:
 
 public:
   BodyDetector();
-  virtual int process(int state);
-  virtual int updateTime(int state, uint32 msec);
+  virtual int8_t process(int8_t state);
+  virtual int8_t updateTime(int8_t state, uint32_t msec);
   virtual void clean();
 private:
-  int turn_search();
+  int8_t turn_search(int8_t state);
 };
-
 ///////
 BodyDetector::BodyDetector() {
   //  myservo.attach(PIN_SERVO_SG90_PULSE); // attaches the servo on pin 9 to the servo object
@@ -64,23 +62,23 @@ void BodyDetector::clean() {
   inSearch = -1;
 }
 
-int BodyDetector::process(int state) {
-  myservo.attach(PIN_SERVO_SG90_PULSE); // attaches the servo on pin 9 to the servo object
+int8_t BodyDetector::process(int8_t state) {
+  myservo.attach(PIN_SERVO_SG90_PULSE);     // attaches the servo on pin 9 to the servo object
   enabled = true;
-  return turn_search();
+  return turn_search(state);
 }
-int BodyDetector::updateTime(int state, uint32 msec) {
+int8_t BodyDetector::updateTime(int8_t state, uint32_t msec) {
   if (enabled) {
     countdown -= msec;
     if (countdown <= 0) {     // N sec no input
-      return turn_search();
+      return turn_search(state);
     }
   }
   return state;
 }
-int BodyDetector::turn_search(int state) {
-  int new_state = state;
-  long distance_cm = sr04.Distance();
+int8_t BodyDetector::turn_search(int8_t state) {
+  int8_t new_state = state;
+  long distance_cm = mysr04.Distance();
   bool bsee = (distance_cm <= SR04_MAX_DISTANCE) && (distance_cm > 0);
   bool changed = (bsee != bFound);
   if (changed) {

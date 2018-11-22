@@ -1,5 +1,4 @@
 
-#include <SoftwareSerial.h>
 #include "constants.h"
 #include "BT_SR505.h"
 #include "servo_ultrasound.h"
@@ -8,6 +7,7 @@
 #include "pub_sub.h"
 #include "sing_song.h"
 #include "hand_detector.h"
+#include "stepper_motor.h"
 
 // Commands
 // const int CMD_Detect_Sing = 0;   // detect and sing
@@ -26,16 +26,19 @@ static const long BAUDRATE = 115200;    // 9600 19200 38400 57600, 115200
 static const int DURATION = 10;         // msec
 
 static long lmsec_val=0, msec_val;
-static int cur_state = DETECT_NONE;
+static int8_t cur_state = DETECT_NONE;
 
-static SoftwareSerial BTSerial(PIN_BlueTooth_RX, PIN_BlueTooth_TX); // RX | TX
+SoftwareSerial BTSerial(PIN_BlueTooth_RX, PIN_BlueTooth_TX); // RX | TX
+
 static const int NUM_DEVICE = 6;
-static HalloweenBase* all_dev[] = { new Watcher(), new StepprMotor(),
-  new Rim_LED(), new FacialLights(), new SingSong(), new hand_detector(), NULL};
+static HalloweenBase* all_dev[] = {new HandDetector(), new StepprMotor(),
+  new Rim_LED(), new FacialLights(), new SingSong(), new HandDetector(), NULL};
 
-PubSub* body_watcher = new PubSub(all_dev[0], {all_dev[1], all_dev[2], NULL});
-PubSub* candy_watcher = new PubSub(all_dev[4], {all_dev[3], NULL});
-
+HalloweenBase* pdetector1[] = {all_dev[1], all_dev[2], NULL};
+PubSub* body_watcher = new PubSub(all_dev[0], pdetector1);
+HalloweenBase* pdetector2[] = {all_dev[3], NULL};
+PubSub* candy_watcher = new PubSub(all_dev[4], pdetector2);
+HalloweenBase* pall[] = {all_dev[1], all_dev[2], candy_watcher, NULL};
 static HalloweenBase* pcommands[] = {
   new TestBlueTooth(BTSerial),        // cmd 0
   all_dev[0],             //1
@@ -46,13 +49,13 @@ static HalloweenBase* pcommands[] = {
   all_dev[5],             //6
   body_watcher,           //7
   candy_watcher,          //8
-  new PubSub(all_dev[0],{all_dev[1], all_dev[2], candy_watcher, NULL})              //9
+  new PubSub(all_dev[0], pall)              //9
 };
 int num_cmds = sizeof(pcommands) / sizeof(pcommands[0]);   //
-int cur_cmd_idx = num_cmds - 1;
+int8_t cur_cmd_idx = num_cmds - 1;
 
 // called by a HalloweenBase module TODO: => event?
-bool update_state(int newState) {
+bool update_state(int8_t newState) {
   bool ret = cur_state != newState;
   if (ret) {
     Serial.print("changing state from");
@@ -76,17 +79,17 @@ void setup() {
   Serial.println("Connect to HC-05 from any other bluetooth device with 1234 as pairing key!.");
   Serial.print("BTserial started at ");
   Serial.println(BAUDRATE);
-  HalloweenBase::pOutput = &BTSerial;
 
   msec_val = millis();
   lmsec_val = msec_val;
 
-  for (HalloweenBase* pcmd = all_dev; pcmd; pcmd++) {
-    pcmd++->clean();
+  for (HalloweenBase** pcmd = all_dev; (*pcmd); pcmd++) {
+    (*pcmd)++->clean();
   }
 }
-static int new_state;
+static int8_t new_state;
 static bool bvalid;
+static char data;
 void loop() {
   if (BTSerial.available()){
     bvalid = false;
@@ -97,7 +100,7 @@ void loop() {
       int cmd = data - '0';
       if ((cmd >= 0) && (cmd < num_cmds)) {
         pcommands[cur_cmd_idx]->clean();
-        new_state = pcommands[cmd]>process(cur_state);
+        new_state = pcommands[cmd]->process(cur_state);
         update_state(new_state);
         bvalid = true;
         cur_cmd_idx = cmd;
@@ -118,3 +121,8 @@ void loop() {
     lmsec_val = msec_val;
   }
 }
+void HalloweenBase::clean() {
+  countdown = 0; 
+  enabled = false;
+}
+

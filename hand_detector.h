@@ -13,13 +13,9 @@ private:
 public:
   HandDetector();
 
-  virtual int process(int state) = 0;
-  virtual int updateTime(int state, uint32 msec) = 0;
-  virtual void clean() {countdown = 0; enabled = false};
-
-  int process(int state);
-  void updateTime(int state, int msec);
-  void clean() {;};
+  virtual int8_t process(int8_t state);
+  virtual int8_t updateTime(int8_t state, uint32_t msec);
+  virtual void clean() {;};
 
 private:
   bool search();
@@ -31,23 +27,23 @@ HandDetector::HandDetector() {
   bFound = false;
 }
 bool HandDetector::search() {
-  bool bRet = (digitalRead(PIN_PIR) == HIGH));
+  bool bRet = (digitalRead(PIN_PIR) == HIGH);
   bool state_change = (bRet != bFound);
   if (state_change) {
     if (bRet) {
       Serial.print("Somebody ");
-      pOutput->print("=>INFO: Somebody ");
+      BTSerial.print("=>INFO: Somebody ");
     } else {
       Serial.print("Nobody");
-      pOutput->print("=>INFO: Nobody ");
+      BTSerial.print("=>INFO: Nobody ");
     }
     Serial.println("is here");
-    pOutput->println("is here");
+    BTSerial.println("is here");
     bFound = bRet;
   }
   return state_change;
 }
-int HandDetector::process(int state) {
+int8_t HandDetector::process(int8_t state) {
   enabled = true;
   bool bchanged = search();
   if (bchanged) {
@@ -62,7 +58,7 @@ int HandDetector::process(int state) {
     return state;
   }
 }
-void HandDetector::updateTime(int state, int msec) {
+int8_t HandDetector::updateTime(int8_t state, uint32_t msec) {
   int ret_state = state;
   if (enabled) {
     bool bchanged = search();

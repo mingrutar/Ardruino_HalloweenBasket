@@ -3,6 +3,7 @@
 */
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
+#include <SoftwareSerial.h>
 
 const int PIN_SERVO_SG90_PULSE = 8;   // was 9
 const int PIN_Buzz = 9;
@@ -23,19 +24,17 @@ const int PIN_SR04_ECHO = 12;         // ultrasound sensor SR04, L10
 const int PIN_SR04_TRIG = 13;
 
 const int PIN_LED_1 = 23;
-const int PIN_LED_1 = 26;
-const int PIN_LED_1 = 31;
-const int PIN_LED_1 = 34;
+const int PIN_LED_2 = 26;
 
 // state
-const int DETECT_NONE = 0;
-const int DETECT_BODY = 1;
-const int DETECT_HAND = 2;
+const int8_t DETECT_NONE = 0;
+const int8_t DETECT_BODY = 1;
+const int8_t DETECT_HAND = 2;
 
 // shared time delay
-const uint32 PIR_DELAY_TIME = 8000;     // in msec, 8 sec fr RIP state change
+const uint32_t PIR_DELAY_TIME = 8000;     // in msec, 8 sec fr RIP state change
 
-extern void update_state(int newState);
+extern SoftwareSerial BTSerial;
 
 // HalloweenBase isthe  base class for Halloween project
 
@@ -43,16 +42,17 @@ class HalloweenBase {
 public:
   HalloweenBase() : enabled(false) {;};
 
-  virtual int process(int state) = 0;
-  virtual int updateTime(int state, uint32 msec) = 0;
-  virtual void clean() {countdown = 0; enabled = false};
+  virtual int8_t process(int8_t state) = 0;
+  virtual int8_t updateTime(int8_t state, uint32_t msec) = 0;
+  virtual void clean();
 
+  inline void enableit(bool val) {enabled = val;}
+  
 protected:
   // virtual void at_start() {
   // TODO: add action
   // }
   bool enabled;
-  int32 countdown;
-  static Stream *pOutput;
+  int32_t countdown;
 };
 #endif

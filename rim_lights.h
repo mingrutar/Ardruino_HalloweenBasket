@@ -7,8 +7,8 @@
 
 #include "neopixel_play.h"
 
-const uint16 LED_COUNT 40;
-static Adafruit_NeoPixel rim_leds = Adafruit_NeoPixel(LED_COUNT, PIN_NEO_RIM, NEO_GRB + NEO_KHZ800);
+static const int rim_led_count = 40;
+static Adafruit_NeoPixel rim_leds = Adafruit_NeoPixel(rim_led_count, PIN_NEO_RIM, NEO_GRB + NEO_KHZ800);
 // Create instance of NeoPixel class
 // Parameter 1 = number of pixels in leds
 // Parameter 2 = Arduino pin number (most are valid)
@@ -20,20 +20,21 @@ static Adafruit_NeoPixel rim_leds = Adafruit_NeoPixel(LED_COUNT, PIN_NEO_RIM, NE
 //   NEO_RGBW    Pixels are wired for RGBW bitstream (NeoPixel RGBW products)
 class Rim_LED : public NeoLEDPlay {
 private:
-  const uint32 DELAY_TIME = 2000;     // in msec
-  const uint32 SHORT_ON = 500;        // in msec
-  const uint32 LONG_OFF = 30000;      // in msec,
+  static const int DELAY_TIME = 2000;     // in msec
+  static const int SHORT_ON = 500;        // in msec
+  static const int LONG_OFF = 30000;      // in msec,
 
   bool color_on;
-  uint32 on_time, off_time;
+  int on_time;
+  int off_time;
 
 public:
   Rim_LED() : NeoLEDPlay(rim_leds) {;};
-  virtual int process(int state);
-  virtual int updateTime(int state, uint32 msec);
+  virtual int8_t process(int8_t state);
+  virtual int8_t updateTime(int8_t state, uint32_t msec);
 };
 //////////////
-int Rim_LED::process(int state) {
+int8_t Rim_LED::process(int8_t state) {
   enabled = true;
   color_on = true;
   if (state == DETECT_NONE) {
@@ -44,8 +45,9 @@ int Rim_LED::process(int state) {
     off_time = 0;
   }
   select_play(-1);                    // any rythm
+  return state;
 }
-int Rim_LED::updateTime(int state, uint32 msec) {
+int8_t Rim_LED::updateTime(int8_t state, uint32_t msec) {
   if (enabled) {
     countdown -= msec;
     if (countdown <= 0) {
@@ -59,5 +61,6 @@ int Rim_LED::updateTime(int state, uint32 msec) {
       color_on = !color_on;
     }
   }
+  return state;
 }
 #endif

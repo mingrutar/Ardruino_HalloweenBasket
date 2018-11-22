@@ -18,9 +18,9 @@ size_t note_size = sizeof(notes)/sizeof(notes[0]);
 
 class SingSong : public HalloweenBase {
 private:
-  const int MAX_NUM_NOTE = 105;
-  const int LOW_DURATION = 80;    // millisec
-  const int HOW_DURATION = 800;
+  static const int LOW_DURATION = 80;    // millisec
+  static const int HOW_DURATION = 800;
+  static const int MAX_NUM_NOTE = 105;
 
   int play_note[MAX_NUM_NOTE];
   int play_duration;
@@ -29,15 +29,15 @@ private:
 
 public:
   SingSong() {;}
-  virtual int process(int state);
-  virtual int updateTime(int state, uint32 msec);
+  virtual int8_t process(int8_t state);
+  virtual int8_t updateTime(int8_t state, uint32_t msec);
 
   int play();
   void log_info();
 };
 ///////////////
 
-int SingSong::process(int state) {
+int8_t SingSong::process(int8_t state) {
   if (state == DETECT_NONE) {
     clean();
   } else {
@@ -53,7 +53,7 @@ int SingSong::process(int state) {
   }
   return state;
 }
-int SingSong::updateTime(int state, uint32 msec) {
+int8_t SingSong::updateTime(int8_t state, uint32_t msec) {
   if (enabled) {
     countdown -= msec;
     if (countdown <= 0) {
@@ -69,9 +69,9 @@ void SingSong::log_info() {
   Serial.print(", nnote=");
   Serial.println(nnote);
 
-  pOutput->print("play_duration=");
-  pOutput->print(play_duration);
-  pOutput->print(", nnote=");
-  pOutput->println(nnote);
+  BTSerial.print("play_duration=");
+  BTSerial.print(play_duration);
+  BTSerial.print(", nnote=");
+  BTSerial.println(nnote);
 }
 #endif

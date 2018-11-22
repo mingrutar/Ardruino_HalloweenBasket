@@ -21,13 +21,14 @@ protected:
   static const byte MAXLIGHT = 255;
 
 public:
-  NeoLEDPlay(Adafruit_NeoPixel& neo);
+  NeoLEDPlay(Adafruit_NeoPixel& neoleds);
 
   virtual void clean();
 
   void setMyColor(int cval, uint8_t wait=INTERVAL);
   uint32_t getMyColor(byte intensity=(MAXLIGHT/2));
 
+  void clear_leds();
   void rainbowCycle(uint8_t wait=INTERVAL);
   void colorWipe(uint32_t c, uint8_t wait=INTERVAL);
   void rainbow(uint8_t wait=INTERVAL);
@@ -35,40 +36,40 @@ public:
   void theaterChaseRainbow(uint8_t wait=INTERVAL);
 
 protected:
-  uint32_t NeoLEDPlay::check_delay_time(uint32_t delay_time);
-  void select_play(int8_t sel=-1, uint32_t wait=INTERVAL);
-  void select_play(int8_t sel=-1, uint32_t clr, uint32_t wait=INTERVAL);
+  uint32_t check_delay_time(uint32_t delay_time);
+  void select_play(int8_t sel, uint32_t wait=INTERVAL);
+  void select_play(uint32_t clr, int8_t sel, uint32_t wait=INTERVAL);
   uint32_t wheel(byte WheelPos);
 
 };
 ////////////////////////
 // Function to set all LEDs off
 NeoLEDPlay::NeoLEDPlay(Adafruit_NeoPixel& neo)
-: neopixels(neo) {
-  neopixels.begin();
+: neoleds(neo) {
+  neoleds.begin();
   clean();
 }
-void NeoLEDPlay::clean() { // Cycle through all LEDs
+void NeoLEDPlay::clean() {        // Cycle through all LEDs
   HalloweenBase::clean();
   clear_leds();
 }
 uint32_t NeoLEDPlay::check_delay_time(uint32_t delay_time) {
-  uint32 min_delay = INTERVAL * neoleds.numPixels();
-  return (delay <= min_delay) ? min_delay : delay_time;
+  uint32_t min_delay = INTERVAL * neoleds.numPixels();
+  return max(delay_time, min_delay);
 }
-void NeoLEDPlay::clear_leds() { // Cycle through all LEDs
+void NeoLEDPlay::clear_leds() {   // Cycle through all LEDs
   for (int i = 0; i < neoleds.numPixels(); i++) { // Set color to zero which is off
     neoleds.setPixelColor(i, neoleds.Color(0, 0, 0));
   }
   neoleds.show();
   delay(INTERVAL);
 }
-void NeoLEDPlay::select_play(int8_t sel, uint32_t wait=INTERVAL) {
+void NeoLEDPlay::select_play(int8_t sel, uint32_t wait) {
   byte clrByPos = random(0, MAXLIGHT);
   select_play(wheel(clrByPos), sel, wait);
 }
-void NeoLEDPlay::select_play(int8_t sel, uint32_t clr, uint32_t wait=INTERVAL) {
-  if sel < 0 {
+void NeoLEDPlay::select_play(uint32_t clr, int8_t sel, uint32_t wait) {
+  if (sel < 0) {
     sel = random(0, 5);
   }
   switch (sel) {
@@ -157,7 +158,7 @@ void NeoLEDPlay::theaterChaseRainbow(uint8_t wait) {
   for (int j = 0; j < 256; j++) {     // cycle all 256 colors in the wheel
     for (int q = 0; q < 3; q++) {
       for (uint16_t i=0; i < neoleds.numPixels(); i = i + 3) {
-        neoleds.setPixelColor(i + q, this.wheel((i+j) % 255)); //turn every third pixel on
+        neoleds.setPixelColor(i + q, wheel((i+j) % 255)); //turn every third pixel on
       }
       neoleds.show();
       delay(wait);
