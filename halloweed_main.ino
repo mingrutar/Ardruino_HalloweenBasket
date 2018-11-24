@@ -16,7 +16,7 @@ static const int DURATION = 10;         // msec
 static long lmsec_val=0, msec_val;
 static int8_t cur_state = DETECT_NONE;
 
-int8_t cur_cmd_idx = 1;
+int8_t cur_cmd_idx = -1; 
 
 SoftwareSerial BTSerial(PIN_BlueTooth_RX, PIN_BlueTooth_TX); // RX | TX
 static const int NUM_DEVICE = 6;
@@ -25,6 +25,24 @@ static const int NUM_CMD = 10;
 static HalloweenBase* all_dev[NUM_DEVICE+1];
 static HalloweenBase* pcommands[NUM_CMD+1];
 
+void check_array(HalloweenBase** parray, int asize) {
+  int jj = 0;
+  for (HalloweenBase** p = parray; (*p); p++) {
+    jj++;
+  }
+  if (jj != asize) {
+    HalloweenBase* pi;
+    for (int i = 0; i < asize; i++) {
+      if (*(parray+i)== NULL) {
+        Serial.print(" !!!!check_array: NULL item for i=");
+        Serial.println(i);
+      }
+    }
+  } else {
+    Serial.print(" !!!!check_array: OK for array size=");
+    Serial.println(jj);
+  }
+}
 static void init_dev() {
   Serial.println("init_dev: all_dev...");
   int i = 0;
@@ -34,8 +52,6 @@ static void init_dev() {
   all_dev[i++] = new HandDetector();  // 3
   all_dev[i++] = new SingSong();      // 4
   all_dev[i++] = new FacialLights();  // 5 for face led
-  Serial.print("init_dev: all_dev...i=");
-  Serial.println(i);
   all_dev[i++] = NULL;
     
   HalloweenBase* pdetector1[] = {all_dev[1], all_dev[2], NULL};
@@ -53,17 +69,11 @@ static void init_dev() {
   pcommands[i++] = all_dev[5],             //6
   pcommands[i++] = body_watcher,           //7
   pcommands[i++] = candy_watcher,          //8
-  Serial.print(" 1   all_dev[0] == NULL? ");
-  Serial.println((all_dev[0] == NULL)?"T":"F");
   pcommands[i++] = new PubSub(all_dev[0], pall);           //9
-  Serial.print(" 2 all_dev[0] == NULL? ");
-  Serial.println((all_dev[0] == NULL)?"T":"F");
   pcommands[i++] = NULL;
-  Serial.print(" 3 all_dev[0] == NULL? ");
-  Serial.println((all_dev[0] == NULL)?"T":"F");
-  Serial.print("init_dev: done pcommands...i=");
-  Serial.println(i);
 
+  check_array(all_dev, NUM_DEVICE);
+  check_array(pcommands, NUM_CMD);
 }
 void setup() {
   // put your setup code here, to run once:
@@ -80,20 +90,7 @@ void setup() {
 
   init_dev();
   
-  Serial.println(" ++ start clean");
-//  HalloweenBase* p;
-//  int ii = 0;
-//  for (ii; ii < NUM_DEVICE; ii++) {
-//    p = all_dev[ii];
-//    Serial.print(" ii =");
-//    Serial.print(ii);
-//    if (p != NULL) {
-//      p->clean();
-//      Serial.println(" cleaned");
-//    } else {
-//      Serial.println(", p == NULL");
-//    }
-//  }
+  Serial.println(" ++ start clean..");
   int jj = 0;
   for (HalloweenBase** pcmd = all_dev; (*pcmd); pcmd++) {
     jj++;
@@ -124,35 +121,37 @@ static int8_t new_state;
 static bool bvalid;
 static char data;
 void loop() {
-//  if (BTSerial.available()){
-//    bvalid = false;
-//    data = BTSerial.read();
-//    if (isPrintable(data)) {
-//      Serial.print("receive data=");
-//      Serial.println(data);
-//      int cmd = data - '0';
-//      if ((cmd >= 0) && (cmd < num_cmds)) {
-//        pcommands[cur_cmd_idx]->clean();
-//        new_state = pcommands[cmd]->process(cur_state);
-//        update_state(new_state);
-//        bvalid = true;
-//        cur_cmd_idx = cmd;
-//      }
-//    }
-//    if (!bvalid) {
-//      Serial.print("WARN: unknown input");
-//      Serial.println(data);
-//      BTSerial.print("=>WARN: unknown input");
-//      BTSerial.println(data);
-//    }
-//  }
+  if (BTSerial.available()){
+    bvalid = false;
+    data = BTSerial.read();
+    if (isPrintable(data)) {
+      Serial.print(" ...receive data=");
+      Serial.println(data);
+      int cmd = data - '0';
+      if ((cmd >= 0) && (cmd < NUM_CMD)) {
+        pcommands[cur_cmd_idx]->clean();
+        new_state = pcommands[cmd]->process(cur_state);
+        update_state(new_state);
+        bvalid = true;
+        cur_cmd_idx = cmd;
+      }
+    }
+    if (!bvalid) {
+      Serial.print("WARN: unknown input");
+      Serial.println(data);
+      BTSerial.print("=>WARN: unknown input");
+      BTSerial.println(data);
+    }
+  }
   // update time
   msec_val = millis();
-  if ((msec_val- lmsec_val) >= DURATION) {
-//    new_state = pcommands[cur_cmd_idx]->updateTime(cur_state, (msec_val- lmsec_val));
-//    update_state(new_state);
+  if (((msec_val- lmsec_val) >= DURATION) && (cur_cmd_idx >=0))  {
+    new_state = pcommands[cur_cmd_idx]->updateTime(cur_state, (msec_val- lmsec_val));
+    update_state(new_state);
     lmsec_val = msec_val;
 //    Serial.println(" A loop ...");
+  } else {
+    delay(DURATION);
   }
 }
 void HalloweenBase::clean() {
