@@ -46,12 +46,14 @@ protected:
 // Function to set all LEDs off
 NeoLEDPlay::NeoLEDPlay(Adafruit_NeoPixel& neo)
 : neoleds(neo) {
-  neoleds.begin();
-  clean();
+  Serial.println("NeoLEDPlay::NeoLEDPlay");
+  neo.begin();
+//  clean();
 }
 void NeoLEDPlay::clean() {        // Cycle through all LEDs
   HalloweenBase::clean();
   clear_leds();
+  Serial.println("NeoLEDPlay::cleaned");
 }
 uint32_t NeoLEDPlay::check_delay_time(uint32_t delay_time) {
   uint32_t min_delay = INTERVAL * neoleds.numPixels();

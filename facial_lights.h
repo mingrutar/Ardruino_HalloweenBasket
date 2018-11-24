@@ -8,7 +8,7 @@
 
 #include "neopixel_play.h"
 
-static const int face_led_count = 40;
+static const int face_led_count = 10;
 static Adafruit_NeoPixel face_leds = Adafruit_NeoPixel(face_led_count, PIN_NEO_Face, NEO_GRB + NEO_KHZ800);
 
 class FacialLights : public NeoLEDPlay {
@@ -19,11 +19,14 @@ private:
   uint32_t on_time, off_time;
 
 public:
-  FacialLights() : NeoLEDPlay(face_leds) {;};
+  FacialLights();
   virtual int8_t process(int8_t state);
   virtual int8_t updateTime(int8_t state, uint32_t msec);
  };
 ///////////////
+FacialLights::FacialLights() : NeoLEDPlay(face_leds) {
+  Serial.println("FacialLights::FacialLights()");
+}
 int8_t FacialLights::process(int8_t state) {
   enabled = true;
   if (state != DETECT_NONE) {

@@ -29,11 +29,15 @@ private:
   int off_time;
 
 public:
-  Rim_LED() : NeoLEDPlay(rim_leds) {;};
+  Rim_LED();
   virtual int8_t process(int8_t state);
   virtual int8_t updateTime(int8_t state, uint32_t msec);
 };
 //////////////
+Rim_LED::Rim_LED() : NeoLEDPlay(rim_leds) {
+  Serial.println("Rim_LED::Rim_LED()");
+};
+
 int8_t Rim_LED::process(int8_t state) {
   enabled = true;
   color_on = true;

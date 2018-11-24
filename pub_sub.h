@@ -48,9 +48,11 @@ int8_t PubSub::updateTime(int8_t state, uint32_t msec) {
   return ret_state;
 }
 void PubSub::clean() {
+  Serial.print("PubSub::clean()");
   pPub->clean();
   for (HalloweenBase** pcmd = pSub; *pcmd; pcmd++) {
     (*pcmd)->clean();
   }
+  Serial.println(" done");
 }
 #endif

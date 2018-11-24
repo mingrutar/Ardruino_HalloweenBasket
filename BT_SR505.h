@@ -28,6 +28,8 @@ TestBlueTooth::TestBlueTooth(SoftwareSerial& btdevice)
 
 int8_t TestBlueTooth::process(int8_t state) {
   enabled = true;
+  Serial.print("TestBlueTooth::process: enabled=");
+  Serial.println(enabled);
   BTSerial.write("=>INFO: state is ");
   BTSerial.write(state);
   countdown = DELAY_TIME;
@@ -35,9 +37,11 @@ int8_t TestBlueTooth::process(int8_t state) {
 }
 int8_t TestBlueTooth::updateTime(int8_t state, uint32_t msec) {
   if (enabled) {
+    Serial.print("TestBlueTooth::updateTime: enabled=");
+    Serial.println(enabled);
     countdown -= msec;
     if (countdown <= 0) {   // N sec no input
-      Serial.println("Done test");
+      Serial.println("TestBlueTooth::updateTime: done test");
       BTSerial.write(" =>ECHO: Done test");
       HalloweenBase::clean();
     } else if (BTSerial.available()){
