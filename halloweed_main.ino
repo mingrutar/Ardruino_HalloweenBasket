@@ -1,7 +1,7 @@
 #include <SoftwareSerial.h>
 
 #include "constants.h"
-#include "BT_SR505.h"
+//#include "BT_SR505.h"
 #include "facial_lights.h"
 #include "rim_lights.h"
 #include "pub_sub.h"
@@ -39,7 +39,7 @@ void check_array(HalloweenBase** parray, int asize) {
       }
     }
   } else {
-    Serial.print(" !!!!check_array: OK for array size=");
+    Serial.print(" check_array: OK for array size=");
     Serial.println(jj);
   }
 }
@@ -60,16 +60,16 @@ static void init_dev() {
   PubSub* candy_watcher = new PubSub(all_dev[3], pdetector2);
   HalloweenBase* pall[] = {all_dev[1], all_dev[2], candy_watcher, NULL};
   i = 0;
-  pcommands[i++] = new TestBlueTooth(BTSerial);  //0
-  pcommands[i++] = all_dev[0];             //1
-  pcommands[i++] = all_dev[1];             //2
-  pcommands[i++] = all_dev[2];             //3
-  pcommands[i++] = all_dev[3],             //4
-  pcommands[i++] = all_dev[4],             //5
-  pcommands[i++] = all_dev[5],             //6
-  pcommands[i++] = body_watcher,           //7
-  pcommands[i++] = candy_watcher,          //8
-  pcommands[i++] = new PubSub(all_dev[0], pall);           //9
+//  pcommands[i++] = new TestBlueTooth(BTSerial);  //0
+  pcommands[i++] = all_dev[0];             //0, servo/us
+  pcommands[i++] = all_dev[1];             //1, sm
+  pcommands[i++] = all_dev[2];             //2, rim_led
+  pcommands[i++] = all_dev[3],             //3, rip
+  pcommands[i++] = all_dev[4],             //4, sing song 
+  pcommands[i++] = all_dev[5],             //5, fled
+  pcommands[i++] = body_watcher,           //6, 
+  pcommands[i++] = candy_watcher,          //7
+  pcommands[i++] = new PubSub(all_dev[0], pall);    //8
   pcommands[i++] = NULL;
 
   check_array(all_dev, NUM_DEVICE);
@@ -80,7 +80,7 @@ void setup() {
   Serial.begin(9600);
   randomSeed(analogRead(0));
   Serial.println("start..");
-  Serial.println("Connect to HC-05 from any other bluetooth device with 1234 as pairing key!.");
+//  Serial.println("Connect to HC-05 from any other bluetooth device with 1234 as pairing key!.");
   Serial.print("BTserial started at ");
   Serial.println(BAUDRATE);
 
@@ -94,11 +94,13 @@ void setup() {
   int jj = 0;
   for (HalloweenBase** pcmd = all_dev; (*pcmd); pcmd++) {
     jj++;
-    Serial.println(" !!! pcmd(clean)=");
+//    Serial.println(" !!! pcmd(clean)=");
     (*pcmd)->clean();
   }
   Serial.print(" -- cleaned all_dev #=");
-  Serial.println(jj);
+  Serial.print(jj);
+  Serial.print(", cur_cmd_idx=");
+  Serial.println(cur_cmd_idx); 
 }
 
 // called by a HalloweenBase module TODO: => event?
@@ -119,28 +121,36 @@ bool update_state(int8_t newState) {
 }
 static int8_t new_state;
 static bool bvalid;
-static char data;
+char data;
 void loop() {
   if (BTSerial.available()){
     bvalid = false;
     data = BTSerial.read();
+    BTSerial.write(",R=");
+    BTSerial.write(data);
+//    Serial.print("r ");
+//    Serial.println(data, HEX);
     if (isPrintable(data)) {
-      Serial.print(" ...receive data=");
-      Serial.println(data);
+      BTSerial.write("P;");
+      BTSerial.write("\n");
+//      Serial.print("y");
       int cmd = data - '0';
       if ((cmd >= 0) && (cmd < NUM_CMD)) {
-        pcommands[cur_cmd_idx]->clean();
-        new_state = pcommands[cmd]->process(cur_state);
-        update_state(new_state);
         bvalid = true;
+        if (cur_cmd_idx>= 0) {
+          pcommands[cur_cmd_idx]->clean();
+        }
+        new_state = pcommands[cmd]->process(cur_state);
         cur_cmd_idx = cmd;
+        update_state(new_state);
       }
     }
     if (!bvalid) {
-      Serial.print("WARN: unknown input");
-      Serial.println(data);
-      BTSerial.print("=>WARN: unknown input");
-      BTSerial.println(data);
+//      Serial.print("WARN: unknown input");
+//      Serial.println(data);
+      BTSerial.write("=>WARN: unknown input");
+      BTSerial.write(data);
+      BTSerial.write("\n");
     }
   }
   // update time

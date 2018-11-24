@@ -5,8 +5,7 @@
 #define CONSTANTS_H
 #include <SoftwareSerial.h>
 
-const int PIN_SERVO_SG90_PULSE = 39;   // was 9
-const int PIN_Buzz = 9;
+const int PIN_Buzz = 12;
 const int PIN_BlueTooth_TX = 10;      // HC-05 Rx
 const int PIN_BlueTooth_RX = 11;      // HC-05 Tx
 
@@ -19,9 +18,9 @@ const int PIN_NEO_RIM = 50;
 const int PIN_NEO_Face = 51;          // was 8
 const int PIN_PIR = 52;               // was 6, HC-SR505
 
-
-const int PIN_SR04_ECHO = 12;         // ultrasound sensor SR04, L10
-const int PIN_SR04_TRIG = 8;
+const int PIN_SR04_ECHO = 8;         // ultrasound sensor SR04, L10
+const int PIN_SR04_TRIG = 9;
+const int PIN_SERVO_SG90_PULSE = 39;   // was 9
 
 const int PIN_LED_1 = 23;
 const int PIN_LED_2 = 26;

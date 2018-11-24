@@ -56,7 +56,7 @@ int8_t SingSong::process(int8_t state) {
 int8_t SingSong::updateTime(int8_t state, uint32_t msec) {
   if (enabled) {
     countdown -= msec;
-    if (countdown <= 0) {
+    if ((countdown <= 0) && (cur_note < nnote)) {
       tone(PIN_Buzz, play_note[cur_note++], play_duration);
       countdown = play_duration;
     }
