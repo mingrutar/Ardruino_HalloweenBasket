@@ -69,9 +69,9 @@ void SingSong::log_info() {
   Serial.print(", nnote=");
   Serial.println(nnote);
 
-  BTSerial.print("play_duration=");
-  BTSerial.print(play_duration);
-  BTSerial.print(", nnote=");
-  BTSerial.println(nnote);
+  Serial1.print("play_duration=");
+  Serial1.print(play_duration);
+  Serial1.print(", nnote=");
+  Serial1.println(nnote);
 }
 #endif

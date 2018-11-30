@@ -38,9 +38,7 @@ public:
 protected:
   uint32_t check_delay_time(uint32_t delay_time);
   void select_play(int8_t sel, uint32_t wait=INTERVAL);
-  void select_play(uint32_t clr, int8_t sel, uint32_t wait=INTERVAL);
   uint32_t wheel(byte WheelPos);
-
 };
 ////////////////////////
 // Function to set all LEDs off
@@ -68,9 +66,7 @@ void NeoLEDPlay::clear_leds() {   // Cycle through all LEDs
 }
 void NeoLEDPlay::select_play(int8_t sel, uint32_t wait) {
   byte clrByPos = random(0, MAXLIGHT);
-  select_play(wheel(clrByPos), sel, wait);
-}
-void NeoLEDPlay::select_play(uint32_t clr, int8_t sel, uint32_t wait) {
+  uint32_t clr = wheel(clrByPos);
   if (sel < 0) {
     sel = random(0, 5);
   }
@@ -78,20 +74,17 @@ void NeoLEDPlay::select_play(uint32_t clr, int8_t sel, uint32_t wait) {
     case 0:
       theaterChaseRainbow(wait);
       break;
-    case 1:
-      rainbowCycle(wait);
-      break;
+//    case 1: seems cause crash
+//      rainbowCycle(wait);
+//      break;
     case 2:
       rainbow(wait);
       break;
     case 3:
       theaterChase(clr, wait);
       break;
-    case 4:
-      colorWipe(clr, wait);
-      break;
     default:
-      clear_leds();
+      colorWipe(clr, wait);
   }
 }
 

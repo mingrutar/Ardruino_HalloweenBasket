@@ -30,7 +30,11 @@ PubSub::PubSub(HalloweenBase* trigger, HalloweenBase** targets)
   }
 }
 int8_t PubSub::process(int8_t state) {
+  Serial.print("PubSub::process, state=");
+  Serial.print(state);
   int ret_state = pPub->process(state);
+  Serial.print(", new_state=");
+  Serial.println(ret_state);
   if (update_state(ret_state)) {
     for (HalloweenBase** pcmd = pSub; *pcmd; pcmd++) {
       ret_state = (*pcmd)->process(ret_state);

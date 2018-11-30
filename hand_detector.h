@@ -32,13 +32,12 @@ bool HandDetector::search() {
   if (state_change) {
     if (bRet) {
       Serial.print("Somebody ");
-      BTSerial.print("=>INFO: Somebody ");
+      Serial.println("is here");
+      Serial1.print("=>INFO: Somebody ");
     } else {
-      Serial.print("Nobody");
-      BTSerial.print("=>INFO: Nobody ");
+      Serial1.print("=>INFO: Nobody ");
     }
-    Serial.println("is here");
-    BTSerial.println("is here");
+    Serial1.println("is here");
     bFound = bRet;
   }
   return state_change;
@@ -62,6 +61,8 @@ int8_t HandDetector::updateTime(int8_t state, uint32_t msec) {
   int ret_state = state;
   if (enabled) {
     bool bchanged = search();
+    Serial.print("HandDetector::updateTime: bchanged=");
+    Serial.println(bchanged);
     if (bchanged) {
       if (bFound) {
         countdown = PIR_DELAY_TIME;

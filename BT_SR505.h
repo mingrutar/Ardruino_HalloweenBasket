@@ -1,10 +1,17 @@
 /**
  * BT_SR505.h
- * write and read from blue tooth SR505
+ * 
+ * this module is not in use. the main uses Serial1
+ * write and read from blue tooth SR505 via digital
  */
 #ifndef BT_SR505_H
 #define BT_SR505_H
 #include <SoftwareSerial.h>
+
+static const int PIN_BlueTooth_TX = 10;      // HC-05 Rx
+static const int PIN_BlueTooth_RX = 11;      // HC-05 Tx
+
+SoftwareSerial BTSerial(PIN_BlueTooth_RX, PIN_BlueTooth_TX); // RX | TX
 
 class TestBlueTooth : public HalloweenBase {
 public:

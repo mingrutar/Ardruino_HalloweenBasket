@@ -11,16 +11,16 @@
 #include "servo_ultrasound.h"
 
 static const long BAUDRATE = 115200;    // 9600 19200 38400 57600, 115200
-static const int DURATION = 10;         // msec
+static const int DURATION = 20;         // msec
 
 static long lmsec_val=0, msec_val;
 static int8_t cur_state = DETECT_NONE;
 
 int8_t cur_cmd_idx = -1; 
 
-SoftwareSerial BTSerial(PIN_BlueTooth_RX, PIN_BlueTooth_TX); // RX | TX
+//
 static const int NUM_DEVICE = 6;
-static const int NUM_CMD = 10;
+static const int NUM_CMD = 9;
 
 static HalloweenBase* all_dev[NUM_DEVICE+1];
 static HalloweenBase* pcommands[NUM_CMD+1];
@@ -60,9 +60,8 @@ static void init_dev() {
   PubSub* candy_watcher = new PubSub(all_dev[3], pdetector2);
   HalloweenBase* pall[] = {all_dev[1], all_dev[2], candy_watcher, NULL};
   i = 0;
-//  pcommands[i++] = new TestBlueTooth(BTSerial);  //0
   pcommands[i++] = all_dev[0];             //0, servo/us
-  pcommands[i++] = all_dev[1];             //1, sm
+  pcommands[i++] = all_dev[1];             //1, sepped motor
   pcommands[i++] = all_dev[2];             //2, rim_led
   pcommands[i++] = all_dev[3],             //3, rip
   pcommands[i++] = all_dev[4],             //4, sing song 
@@ -80,11 +79,12 @@ void setup() {
   Serial.begin(9600);
   randomSeed(analogRead(0));
   Serial.println("start..");
-//  Serial.println("Connect to HC-05 from any other bluetooth device with 1234 as pairing key!.");
-  Serial.print("BTserial started at ");
+  Serial.println("Connect to HC-05 from any other bluetooth device with 1234 as pairing key!.");
+  Serial.print("Serial1 started at ");
   Serial.println(BAUDRATE);
 
-  BTSerial.begin(BAUDRATE);
+  Serial1.begin(BAUDRATE);    // connected to BT
+  Serial1.println("OK");
   msec_val = millis();
   lmsec_val = msec_val;
 
@@ -104,53 +104,53 @@ void setup() {
 }
 
 // called by a HalloweenBase module TODO: => event?
-bool update_state(int8_t newState) {
+static bool update_state(int8_t newState) {
   bool ret = cur_state != newState;
   if (ret) {
-    Serial.print("changing state from");
+    Serial.print("main::update_state: cur_state=");
     Serial.print(cur_state);
-    Serial.print(" to ");
+    Serial.print(", newState=");
     Serial.println(newState);
-//    BTSerial.print("=>INFO: changing state from");
-//    BTSerial.print(cur_state);
-//    BTSerial.print(" to ");
-//    BTSerial.println(newState);
     cur_state = newState;
+//    report_state('U');
   }
   return ret;
 }
 static int8_t new_state;
-static bool bvalid;
 char data;
+
+void report_state(char tt) {
+  Serial1.write(",$");
+  Serial1.write(tt);
+  Serial1.write(":(S)=");
+  char tmp = cur_state + '0';
+  Serial1.write(tmp);
+  Serial1.write("(C)=");
+  tmp = (cur_cmd_idx == -1) ? '-' : cur_cmd_idx + '0';
+  Serial1.write(tmp);
+  Serial1.write("\n");
+}
 void loop() {
-  if (BTSerial.available()){
-    bvalid = false;
-    data = BTSerial.read();
-    BTSerial.write(",R=");
-    BTSerial.write(data);
-//    Serial.print("r ");
-//    Serial.println(data, HEX);
+  if (Serial1.available()){
+    data = Serial1.read();
+    report_state('L');
     if (isPrintable(data)) {
-      BTSerial.write("P;");
-      BTSerial.write("\n");
-//      Serial.print("y");
       int cmd = data - '0';
       if ((cmd >= 0) && (cmd < NUM_CMD)) {
-        bvalid = true;
         if (cur_cmd_idx>= 0) {
           pcommands[cur_cmd_idx]->clean();
         }
         new_state = pcommands[cmd]->process(cur_state);
         cur_cmd_idx = cmd;
         update_state(new_state);
+      } else {
+        if (cur_cmd_idx != -1)
+          pcommands[cur_cmd_idx]->clean();
+        cur_cmd_idx = -1;
       }
-    }
-    if (!bvalid) {
-//      Serial.print("WARN: unknown input");
-//      Serial.println(data);
-      BTSerial.write("=>WARN: unknown input");
-      BTSerial.write(data);
-      BTSerial.write("\n");
+    } else {
+      Serial.print("WARN: ignore unknown input");
+      Serial.println(data, HEX);
     }
   }
   // update time
@@ -159,7 +159,6 @@ void loop() {
     new_state = pcommands[cur_cmd_idx]->updateTime(cur_state, (msec_val- lmsec_val));
     update_state(new_state);
     lmsec_val = msec_val;
-//    Serial.println(" A loop ...");
   } else {
     delay(DURATION);
   }

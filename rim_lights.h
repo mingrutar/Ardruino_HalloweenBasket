@@ -20,13 +20,14 @@ static Adafruit_NeoPixel rim_leds = Adafruit_NeoPixel(rim_led_count, PIN_NEO_RIM
 //   NEO_RGBW    Pixels are wired for RGBW bitstream (NeoPixel RGBW products)
 class Rim_LED : public NeoLEDPlay {
 private:
-  static const int DELAY_TIME = 2000;     // in msec
-  static const int SHORT_ON = 500;        // in msec
-  static const int LONG_OFF = 30000;      // in msec,
+  static const int DELAY_TIME = 1000;     // in msec
+  static const int LONG_OFF = 10000;      // in msec,
+
+  static const int STATE1_PLAY = 3;       // theaterChase
+  static const int STATE3_PLAY = -1;      // any,
 
   bool color_on;
-  int on_time;
-  int off_time;
+  void set_play(int8_t state);
 
 public:
   Rim_LED();
@@ -40,29 +41,30 @@ Rim_LED::Rim_LED() : NeoLEDPlay(rim_leds) {
 
 int8_t Rim_LED::process(int8_t state) {
   enabled = true;
-  color_on = true;
-  if (state == DETECT_NONE) {
-    on_time = SHORT_ON;
-    off_time = LONG_OFF;
-  } else {
-    on_time = DELAY_TIME;
-    off_time = 0;
-  }
-  select_play(-1);                    // any rythm
+  color_on = false;
+  set_play(state);
   return state;
+}
+
+void Rim_LED::set_play(int8_t state) {
+  countdown = DELAY_TIME;
+  if (state == DETECT_NONE) {
+    if (color_on) {
+      clear_leds();
+      countdown = LONG_OFF;
+    } else {
+      select_play(STATE1_PLAY);            // choose theaterChase
+    }
+    color_on = !color_on;
+  } else {
+    select_play(-1);                    // any rythm
+  }
 }
 int8_t Rim_LED::updateTime(int8_t state, uint32_t msec) {
   if (enabled) {
     countdown -= msec;
     if (countdown <= 0) {
-      if ((off_time > 0) && color_on) {  // turn off the leds
-        clear_leds();
-        countdown = off_time;
-      } else {
-        select_play(-1);
-        countdown = on_time;
-      }
-      color_on = !color_on;
+      set_play(state);
     }
   }
   return state;

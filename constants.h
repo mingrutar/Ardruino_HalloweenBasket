@@ -6,8 +6,6 @@
 #include <SoftwareSerial.h>
 
 const int PIN_Buzz = 12;
-const int PIN_BlueTooth_TX = 10;      // HC-05 Rx
-const int PIN_BlueTooth_RX = 11;      // HC-05 Tx
 
 const int PIN_L293D_Motor_1 = 4;      // L293DPin 1
 const int PIN_L293D_Motor_2 = 5;      // L293DPin 6
@@ -32,8 +30,6 @@ const int8_t DETECT_HAND = 2;
 
 // shared time delay
 const uint32_t PIR_DELAY_TIME = 8000;     // in msec, 8 sec fr RIP state change
-
-extern SoftwareSerial BTSerial;
 
 // HalloweenBase isthe  base class for Halloween project
 
