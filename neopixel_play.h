@@ -17,7 +17,7 @@ private:
   Adafruit_NeoPixel& neoleds;
 
 protected:
-  static const uint8_t INTERVAL = 30;    // delay for pixels take effect
+  static const uint8_t INTERVAL = 20;    // delay for pixels take effect
   static const byte MAXLIGHT = 255;
 
 public:

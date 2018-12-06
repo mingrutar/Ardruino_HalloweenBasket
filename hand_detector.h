@@ -61,8 +61,8 @@ int8_t HandDetector::updateTime(int8_t state, uint32_t msec) {
   int ret_state = state;
   if (enabled) {
     bool bchanged = search();
-    Serial.print("HandDetector::updateTime: bchanged=");
-    Serial.println(bchanged);
+//    Serial.print("HandDetector::updateTime: bchanged=");
+//    Serial.println(bchanged);
     if (bchanged) {
       if (bFound) {
         countdown = PIR_DELAY_TIME;

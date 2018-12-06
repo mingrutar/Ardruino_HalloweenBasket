@@ -24,13 +24,15 @@ private:
   const int SR04_MAX_DISTANCE = 100;    // in cm, up to 400cm
   const int SERVO_N_TURN = 3;           // search 3 times;
   const int SERVO_DELAY = 20;          // was 15 for 1 degree
-  const int LONG_SERVO_DELAY = 200;    // was 15 for 1 degree
+  const int LONG_SERVO_DELAY = 500;    // wait 0.5 sec
 
   uint8_t cur_pos;
   uint8_t cur_cfg_idx;
   bool bFound;
   int8_t inSearch;
 
+  bool is_longwait;
+  
 public:
   BodyDetector();
   virtual int8_t process(int8_t state);
@@ -46,6 +48,7 @@ BodyDetector::BodyDetector() {
     delay(SERVO_DELAY);                   // wait for a sec
     Serial.println("BodyDetector::BodyDetector(): ");
     enabled = true;
+    is_longwait = false;
 }
 void BodyDetector::clean() {
   Serial.print("BodyDetector::clean()");
@@ -61,14 +64,17 @@ void BodyDetector::clean() {
 }
 
 int8_t BodyDetector::process(int8_t state) {
-  myservo.attach(PIN_SERVO_SG90_PULSE);     // attaches the servo on pin 9 to the servo object
   enabled = true;
+  myservo.attach(PIN_SERVO_SG90_PULSE); // attaches the servo on pin 9 to the servo object
   return turn_search(state);
 }
 int8_t BodyDetector::updateTime(int8_t state, uint32_t msec) {
   if (enabled) {
     countdown -= msec;
     if (countdown <= 0) {     // N sec no input
+      if (is_longwait) {
+        myservo.attach(PIN_SERVO_SG90_PULSE); // attaches the servo
+      }
       return turn_search(state);
     }
   }
@@ -90,8 +96,12 @@ int8_t BodyDetector::turn_search(int8_t state) {
       if (state == DETECT_NONE) {
         Serial.print(" + CHANGE: bFound=true distance_cm=");
         Serial.println(distance_cm);
+        is_longwait = true;
+        myservo.detach();
+        delay(SERVO_DELAY);
         new_state = DETECT_BODY;
         countdown = LONG_SERVO_DELAY;
+        Serial.println("found body, detach");
       }
     } else {
 //      Serial.print(" - CHANGE: bFound=false distance_cm=");
@@ -104,6 +114,11 @@ int8_t BodyDetector::turn_search(int8_t state) {
 //    Serial.print(cur_pos);
 //    Serial.print(", ");
     if ((cur_pos <= TURN_START) || (cur_pos >= TURN_END))  {
+      countdown = LONG_SERVO_DELAY;
+      is_longwait = true;
+      myservo.detach();
+      delay(SERVO_DELAY);
+      Serial.println("at the end, detach");
       if (inSearch >= 0) {
         if (++inSearch == SERVO_N_TURN) {
           inSearch = -1;
@@ -114,15 +129,13 @@ int8_t BodyDetector::turn_search(int8_t state) {
 //      Serial.println(" At end, change cfg:");
 //      Serial.print(" cur_cfg_idx=");
 //      Serial.print(cur_cfg_idx);
-      cur_cfg_idx = (++cur_cfg_idx) % 2;
 //      Serial.print(" =>");
 //      Serial.print(cur_cfg_idx);
 //      Serial.print(" && cur_pos=");
 //      Serial.print(cur_pos);
 //      Serial.print(" =>");
+      cur_cfg_idx = (++cur_cfg_idx) % 2;
       cur_pos = cfg[cur_cfg_idx][0];
-//      Serial.println(cur_pos);
-      countdown = LONG_SERVO_DELAY;
     }
     myservo.write(cur_pos);
   }

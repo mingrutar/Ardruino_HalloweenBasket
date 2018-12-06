@@ -55,9 +55,9 @@ static void init_dev() {
   all_dev[i++] = NULL;
     
   HalloweenBase* pdetector1[] = {all_dev[1], all_dev[2], NULL};
-  PubSub* body_watcher = new PubSub(all_dev[0], pdetector1);
+  PubSub* body_watcher = new PubSub(all_dev[0], pdetector1, DETECT_BODY);
   HalloweenBase* pdetector2[] = {all_dev[4], all_dev[5], NULL};
-  PubSub* candy_watcher = new PubSub(all_dev[3], pdetector2);
+  PubSub* candy_watcher = new PubSub(all_dev[3], pdetector2, DETECT_HAND);
   HalloweenBase* pall[] = {all_dev[1], all_dev[2], candy_watcher, NULL};
   i = 0;
   pcommands[i++] = all_dev[0];             //0, servo/us
@@ -68,7 +68,7 @@ static void init_dev() {
   pcommands[i++] = all_dev[5],             //5, fled
   pcommands[i++] = body_watcher,           //6, 
   pcommands[i++] = candy_watcher,          //7
-  pcommands[i++] = new PubSub(all_dev[0], pall);    //8
+  pcommands[i++] = new PubSub(all_dev[0], pall, DETECT_BODY);    //8
   pcommands[i++] = NULL;
 
   check_array(all_dev, NUM_DEVICE);
@@ -103,7 +103,7 @@ void setup() {
   Serial.println(cur_cmd_idx); 
 }
 
-// called by a HalloweenBase module TODO: => event?
+// change state. called by a HalloweenBase module
 static bool update_state(int8_t newState) {
   bool ret = cur_state != newState;
   if (ret) {
@@ -118,7 +118,10 @@ static bool update_state(int8_t newState) {
 }
 static int8_t new_state;
 char data;
-
+//
+// report state via blue tooth 
+// tt indicate the origin. L -> in loop()
+//
 void report_state(char tt) {
   Serial1.write(",$");
   Serial1.write(tt);

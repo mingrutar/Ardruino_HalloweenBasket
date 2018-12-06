@@ -50,6 +50,7 @@ int8_t SingSong::process(int8_t state) {
     cur_note = 0;
     tone(PIN_Buzz, play_note[cur_note++], play_duration);
     countdown = play_duration;
+    Serial.println("SingSong::process: sing...");
   }
   return state;
 }
