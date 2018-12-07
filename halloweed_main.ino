@@ -47,28 +47,37 @@ static void init_dev() {
   Serial.println("init_dev: all_dev...");
   int i = 0;
   all_dev[i++] = new BodyDetector();
-  all_dev[i++] = new StepprMotor();   // 1
-  all_dev[i++] = new Rim_LED();                // 2 for rim led
-  all_dev[i++] = new HandDetector();  // 3
-  all_dev[i++] = new SingSong();      // 4
-  all_dev[i++] = new FacialLights();  // 5 for face led
+  all_dev[i++] = new Rim_LED();       // 1 for rim led
+  all_dev[i++] = new HandDetector();  // 2
+  all_dev[i++] = new SingSong();      // 3
+  all_dev[i++] = new FacialLights();  // 4 for face led
+  all_dev[i++] = new StepprMotor();   // 5
   all_dev[i++] = NULL;
     
-  HalloweenBase* pdetector1[] = {all_dev[1], all_dev[2], NULL};
-  PubSub* body_watcher = new PubSub(all_dev[0], pdetector1, DETECT_BODY);
-  HalloweenBase* pdetector2[] = {all_dev[4], all_dev[5], NULL};
-  PubSub* candy_watcher = new PubSub(all_dev[3], pdetector2, DETECT_HAND);
-  HalloweenBase* pall[] = {all_dev[1], all_dev[2], candy_watcher, NULL};
+  HalloweenBase* body_watcher_pub[] = {all_dev[0], NULL};
+  HalloweenBase* body_watcher_sub[] = {all_dev[1], NULL};
+  PubSub* body_watcher = new PubSub(body_watcher_pub, body_watcher_sub, DETECT_BODY);
+  
+  HalloweenBase* candy_watcher_pub[] = {all_dev[2], NULL};
+//  HalloweenBase* candy_watcher_sub[] = {all_dev[3], all_dev[4], NULL};
+  HalloweenBase* candy_watcher_sub[] = {all_dev[3], NULL};
+  PubSub* candy_watcher = new PubSub(candy_watcher_pub, candy_watcher_sub, DETECT_HAND);
+  
+//  HalloweenBase* pall[] = { all_dev[1], candy_watcher, NULL};
+  HalloweenBase* all_pub[] = { all_dev[1], all_dev[0], NULL};
+  HalloweenBase* all_sub[] = { candy_watcher, NULL};
+  PubSub* all_action = new PubSub(all_pub, all_sub, DETECT_BODY);
+   
   i = 0;
   pcommands[i++] = all_dev[0];             //0, servo/us
-  pcommands[i++] = all_dev[1];             //1, sepped motor
-  pcommands[i++] = all_dev[2];             //2, rim_led
-  pcommands[i++] = all_dev[3],             //3, rip
-  pcommands[i++] = all_dev[4],             //4, sing song 
-  pcommands[i++] = all_dev[5],             //5, fled
+  pcommands[i++] = all_dev[1];             //1, rim_led
+  pcommands[i++] = all_dev[2],             //2, rip
+  pcommands[i++] = all_dev[3],             //3, sing song 
+  pcommands[i++] = all_dev[4],             //4, fled
+  pcommands[i++] = all_dev[5];             //5, sepped motor
   pcommands[i++] = body_watcher,           //6, 
   pcommands[i++] = candy_watcher,          //7
-  pcommands[i++] = new PubSub(all_dev[0], pall, DETECT_BODY);    //8
+  pcommands[i++] = all_action;             //8
   pcommands[i++] = NULL;
 
   check_array(all_dev, NUM_DEVICE);
@@ -103,8 +112,8 @@ void setup() {
   Serial.println(cur_cmd_idx); 
 }
 
-// change state. called by a HalloweenBase module
-static bool update_state(int8_t newState) {
+// change state. called by pub_sub module
+bool update_state(int8_t newState) {
   bool ret = cur_state != newState;
   if (ret) {
     Serial.print("main::update_state: cur_state=");
@@ -134,8 +143,13 @@ void report_state(char tt) {
   Serial1.write("\n");
 }
 void loop() {
+  data = 0;
   if (Serial1.available()){
     data = Serial1.read();
+  } else if (Serial.available()){ 
+    data = Serial.read();
+  }
+  if (data != 0) {
     report_state('L');
     if (isPrintable(data)) {
       int cmd = data - '0';
@@ -143,6 +157,7 @@ void loop() {
         if (cur_cmd_idx>= 0) {
           pcommands[cur_cmd_idx]->clean();
         }
+        cur_state = DETECT_NONE;
         new_state = pcommands[cmd]->process(cur_state);
         cur_cmd_idx = cmd;
         update_state(new_state);
@@ -152,7 +167,7 @@ void loop() {
         cur_cmd_idx = -1;
       }
     } else {
-      Serial.print("WARN: ignore unknown input");
+      Serial.print("WARN: ignore unknown input ");
       Serial.println(data, HEX);
     }
   }

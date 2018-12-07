@@ -15,7 +15,7 @@ public:
 
   virtual int8_t process(int8_t state);
   virtual int8_t updateTime(int8_t state, uint32_t msec);
-  virtual void clean() {;};
+  virtual void clean();
 
 private:
   bool search();
@@ -28,19 +28,26 @@ HandDetector::HandDetector() {
 }
 bool HandDetector::search() {
   bool bRet = (digitalRead(PIN_PIR) == HIGH);
-  bool state_change = (bRet != bFound);
-  if (state_change) {
+//  Serial.print("HandDetector::process: HIGH=");
+//  Serial.print(bRet ? "true" : "false");
+  if (bRet != bFound) {
     if (bRet) {
-      Serial.print("Somebody ");
-      Serial.println("is here");
+      Serial.print(", Somebody ");
       Serial1.print("=>INFO: Somebody ");
     } else {
+      Serial.print(", Nobody ");
       Serial1.print("=>INFO: Nobody ");
     }
+    Serial.println("is here");
     Serial1.println("is here");
     bFound = bRet;
+    return true;
+  } else {
+    return false;
   }
-  return state_change;
+}
+void HandDetector::clean() {
+  
 }
 int8_t HandDetector::process(int8_t state) {
   enabled = true;
@@ -60,16 +67,20 @@ int8_t HandDetector::process(int8_t state) {
 int8_t HandDetector::updateTime(int8_t state, uint32_t msec) {
   int ret_state = state;
   if (enabled) {
-    bool bchanged = search();
-//    Serial.print("HandDetector::updateTime: bchanged=");
-//    Serial.println(bchanged);
-    if (bchanged) {
-      if (bFound) {
-        countdown = PIR_DELAY_TIME;
-        ret_state = DETECT_HAND;
-      } else {
-        countdown = 0;
-        ret_state = (state == DETECT_HAND) ? DETECT_BODY : state;
+    if (state != DETECT_HAND) {
+      bool bchanged = search();
+      if (bchanged) {
+//        Serial.print("HandDetector::updateTime: state=");
+//        Serial.print(state);
+//        Serial.print(", bchanged=");
+//        Serial.println(bchanged ? "true" : "false");
+        if (bFound) {
+          countdown = PIR_DELAY_TIME;
+          ret_state = DETECT_HAND;
+        } else {
+          countdown = 0;
+          ret_state = (state == DETECT_HAND) ? DETECT_BODY : state;
+        }
       }
     } else if (countdown > 0) {
       countdown -= msec;

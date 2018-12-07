@@ -28,6 +28,7 @@ private:
 
   bool color_on;
   void set_play(int8_t state);
+  int my_state;
 
 public:
   Rim_LED();
@@ -40,6 +41,9 @@ Rim_LED::Rim_LED() : NeoLEDPlay(rim_leds) {
 };
 
 int8_t Rim_LED::process(int8_t state) {
+  Serial.print("Rim_LED::process(), state=");
+  Serial.println(state);
+  my_state = state;
   enabled = true;
   color_on = false;
   set_play(state);
@@ -48,23 +52,32 @@ int8_t Rim_LED::process(int8_t state) {
 
 void Rim_LED::set_play(int8_t state) {
   countdown = DELAY_TIME;
-  if (state == DETECT_NONE) {
-    if (color_on) {
-      clear_leds();
-      countdown = LONG_OFF;
-    } else {
-      select_play(STATE1_PLAY);            // choose theaterChase
-    }
-    color_on = !color_on;
+  if (color_on) {
+    clear_leds();
+    countdown = LONG_OFF;
   } else {
-    select_play(-1);                    // any rythm
+    if (state == DETECT_NONE) {
+      select_play(STATE1_PLAY);            // choose theaterChase
+    } else {
+      select_play(STATE1_PLAY);                    // any rythm
+//      select_play(-1);                    // any rythm
+    }
   }
+  color_on = !color_on;
 }
 int8_t Rim_LED::updateTime(int8_t state, uint32_t msec) {
   if (enabled) {
-    countdown -= msec;
-    if (countdown <= 0) {
-      set_play(state);
+    if (my_state == state) {
+      countdown -= msec;
+      if (countdown <= 0) {
+  //      Serial.print("Rim_LED::countdown(), color_on=");
+  //      Serial.print(color_on? "true" : "false");
+  //      Serial.print(", state =");
+  //      Serial.println(state);
+        set_play(state);
+      }
+    } else {
+      clear_leds();
     }
   }
   return state;

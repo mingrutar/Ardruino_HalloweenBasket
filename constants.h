@@ -14,11 +14,11 @@ const int PIN_L293D_Motor_4 = 7;      // L293DPin 14
 
 const int PIN_NEO_RIM = 50;
 const int PIN_NEO_Face = 51;          // was 8
-const int PIN_PIR = 52;               // was 6, HC-SR505
+const int PIN_PIR = 10;               // was 6, HC-SR505
 
 const int PIN_SR04_ECHO = 8;         // ultrasound sensor SR04, L10
 const int PIN_SR04_TRIG = 9;
-const int PIN_SERVO_SG90_PULSE = 39;   // was 9
+const int PIN_SERVO_SG90_PULSE = 11;   // was 9
 
 const int PIN_LED_1 = 23;
 const int PIN_LED_2 = 26;
@@ -29,7 +29,7 @@ const int8_t DETECT_BODY = 1;
 const int8_t DETECT_HAND = 2;
 
 // shared time delay
-const uint32_t PIR_DELAY_TIME = 8000;     // in msec, 8 sec fr RIP state change
+const uint32_t PIR_DELAY_TIME = 9000;     // in msec, 8 sec fr RIP state change
 
 // HalloweenBase isthe  base class for Halloween project
 
