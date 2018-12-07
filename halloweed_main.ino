@@ -21,6 +21,7 @@ int8_t cur_cmd_idx = -1;
 //
 static const int NUM_DEVICE = 6;
 static const int NUM_CMD = 9;
+static const int STATE_1_CMD = 4;
 
 static HalloweenBase* all_dev[NUM_DEVICE+1];
 static HalloweenBase* pcommands[NUM_CMD+1];
@@ -51,7 +52,7 @@ static void init_dev() {
   all_dev[i++] = new HandDetector();  // 2
   all_dev[i++] = new SingSong();      // 3
   all_dev[i++] = new FacialLights();  // 4 for face led
-  all_dev[i++] = new StepprMotor();   // 5
+//  all_dev[i++] = new StepprMotor();   // 5
   all_dev[i++] = NULL;
     
   HalloweenBase* body_watcher_pub[] = {all_dev[0], NULL};
@@ -59,26 +60,30 @@ static void init_dev() {
   PubSub* body_watcher = new PubSub(body_watcher_pub, body_watcher_sub, DETECT_BODY);
   
   HalloweenBase* candy_watcher_pub[] = {all_dev[2], NULL};
-//  HalloweenBase* candy_watcher_sub[] = {all_dev[3], all_dev[4], NULL};
-  HalloweenBase* candy_watcher_sub[] = {all_dev[3], NULL};
-  PubSub* candy_watcher = new PubSub(candy_watcher_pub, candy_watcher_sub, DETECT_HAND);
+  HalloweenBase* candy_watcher_sub1[] = {all_dev[3], all_dev[4], NULL};
+  PubSub* candy_watcher1 = new PubSub(candy_watcher_pub, candy_watcher_sub1, DETECT_HAND);
+  HalloweenBase* candy_watcher_sub2[] = {all_dev[3], NULL};
+  PubSub* candy_watcher2 = new PubSub(candy_watcher_pub, candy_watcher_sub2, DETECT_HAND);
   
-//  HalloweenBase* pall[] = { all_dev[1], candy_watcher, NULL};
   HalloweenBase* all_pub[] = { all_dev[1], all_dev[0], NULL};
-  HalloweenBase* all_sub[] = { candy_watcher, NULL};
+  HalloweenBase* all_sub[] = { candy_watcher1, NULL};
   PubSub* all_action = new PubSub(all_pub, all_sub, DETECT_BODY);
    
   i = 0;
+  // state = 0
   pcommands[i++] = all_dev[0];             //0, servo/us
   pcommands[i++] = all_dev[1];             //1, rim_led
-  pcommands[i++] = all_dev[2],             //2, rip
-  pcommands[i++] = all_dev[3],             //3, sing song 
-  pcommands[i++] = all_dev[4],             //4, fled
-  pcommands[i++] = all_dev[5];             //5, sepped motor
-  pcommands[i++] = body_watcher,           //6, 
-  pcommands[i++] = candy_watcher,          //7
-  pcommands[i++] = all_action;             //8
+  pcommands[i++] = body_watcher;           //2, 
+  pcommands[i++] = all_action;             //3
+  // state = 1
+  pcommands[i++] = all_dev[2];             //4, rip
+  pcommands[i++] = all_dev[3];             //5, sing song 
+  pcommands[i++] = all_dev[4];             //6, fled
+  pcommands[i++] = candy_watcher1;         //7 with Face LED
+  pcommands[i++] = candy_watcher2;         //8 without Face LED
+  
   pcommands[i++] = NULL;
+//  pcommands[i++] = all_dev[5];             //5, sepped motor
 
   check_array(all_dev, NUM_DEVICE);
   check_array(pcommands, NUM_CMD);
@@ -157,7 +162,7 @@ void loop() {
         if (cur_cmd_idx>= 0) {
           pcommands[cur_cmd_idx]->clean();
         }
-        cur_state = DETECT_NONE;
+        cur_state = cmd < STATE_1_CMD ? DETECT_NONE : DETECT_BODY;
         new_state = pcommands[cmd]->process(cur_state);
         cur_cmd_idx = cmd;
         update_state(new_state);
